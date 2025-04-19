@@ -57,7 +57,7 @@ export async function getManifest() {
         ],
       },
       {
-        js: ['dist/contentScripts/index.global.js'],
+        js: ['dist/contentScripts/mscScript.global.js'],
         matches: [
           'https://www.mscdirect.com/*',
         ],

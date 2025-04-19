@@ -1,5 +1,7 @@
 import { onMessage, sendMessage } from 'webext-bridge/background'
 import type { Tabs } from 'webextension-polyfill'
+import executeMSCfuncs from '~/msc/executeMSCfuncs'
+import type { McMasterItem } from '~/Item'
 
 // only on dev mode
 if (import.meta.hot) {
@@ -21,7 +23,6 @@ if (USE_SIDE_PANEL) {
 }
 
 browser.runtime.onInstalled.addListener((): void => {
-  // eslint-disable-next-line no-console
   console.log('Extension installed')
 })
 
@@ -45,7 +46,6 @@ browser.tabs.onActivated.addListener(async ({ tabId }) => {
     return
   }
 
-  // eslint-disable-next-line no-console
   console.log('previous tab', tab)
   sendMessage('tab-prev', { title: tab.title }, { context: 'content-script', tabId })
 })
@@ -61,5 +61,37 @@ onMessage('get-current-tab', async () => {
     return {
       title: undefined,
     }
+  }
+})
+
+onMessage('EXECUTE-MSC', async ({ data }: { data: { urls: string[], mcmasterItemJSON: string, DEBUG: boolean } }) => {
+  // Do whatever processing you need here.
+  console.log('data: ', data)
+  const { urls, mcmasterItemJSON, DEBUG } = data
+  const mcmasterItem = JSON.parse(mcmasterItemJSON) as Partial<McMasterItem>
+  console.log('mcmasterItem: ', mcmasterItem)
+
+  // const testURL
+  //   = 'https://www.mscdirect.com/browse/tn?rd=k&searchterm=ID+Tag+Cable+Tie'
+
+  let windowResults
+  try {
+    // const window = await browser.windows.create({
+    //   url: testURL,
+    // })
+    windowResults = await Promise.all(
+      DEBUG
+        ? [executeMSCfuncs(urls[0], mcmasterItem)]
+        : urls.map(url => executeMSCfuncs(url, mcmasterItem)),
+    )
+  }
+  catch (error) {
+    console.error('Error getting windowResults: ', error)
+  }
+  console.log('windowResults: ', windowResults)
+
+  return {
+    windowResults,
+
   }
 })

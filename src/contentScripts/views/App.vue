@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useToggle } from '@vueuse/core'
 import 'uno.css'
-import { tabs } from 'webextension-polyfill'
-import type { McMasterItem } from './Item'
+import { sendMessage } from 'webext-bridge/content-script'
+import type { McMasterItem } from '../../Item'
+import createSearchQueries from './createSearchQueries'
+import extractTable from '~/utils/extractTable'
 
 const [show, toggle] = useToggle(false)
 const mcmasterItemTitle = ref<string>('')
@@ -18,44 +20,36 @@ async function handleSearchMSC(DEBUG = false) {
   const mcmasterItem: Partial<McMasterItem> = scanPage()
   if (mcmasterItem.primaryName)
     mcmasterItemTitle.value = mcmasterItem.primaryName
-  // if (activeTab) {
-  //   try {
-  //     mcmasterItem = await chrome.tabs.sendMessage(activeTab[0].id, {
-  //       type: 'SCAN',
-  //     })
-  //     setExtractedInfo(mcmasterItem)
-  //   }
-  //   catch (error) {
-  //     console.error('Error scanning McMaster page', error)
-  //   }
-  // }
 
   // Create search queries from extracted mcmaster data
-  // const searchQueries = createSearchQueries(mcmasterItem);
-  // if (DEBUG)
-  //   searchQueries.forEach((searchQuery, index) =>
-  //     console.log(`searchQuery(${index}): ${searchQuery.toString()}`),
-  //   );
+  const searchQueries = createSearchQueries(mcmasterItem)
+  if (DEBUG) {
+    searchQueries.forEach((searchQuery, index) =>
+      console.log(`searchQuery(${index}): ${searchQuery.toString()}`),
+    )
+  }
 
-  // const testURL =
-  //   "https://www.mscdirect.com/browse/tn?rd=k&searchterm=ID+Tag+Cable+Tie";
+  const urls = searchQueries.map(
+    searchQuery =>
+      `https://www.mscdirect.com/browse/tn?rd=k&${searchQuery.toString()}`,
+  )
 
-  // const urls = searchQueries.map(
-  //   (searchQuery) =>
-  //     `https://www.mscdirect.com/browse/tn?rd=k&${searchQuery.toString()}`,
-  // );
+  const sendToBackground = async () => {
+    const response = await sendMessage('EXECUTE-MSC', {
+      urls,
+      mcmasterItemJSON: JSON.stringify(mcmasterItem),
+      DEBUG: true,
+    }, 'background')
 
-  // // TODO: Add try-catch below?
-  // // Execute MSC scripts using created search queries
-  // const windowResults = await Promise.all(
-  //   DEBUG
-  //     ? [executeMSCfuncs(urls[0], mcmasterItem)]
-  //     : urls.map((url) => executeMSCfuncs(url, mcmasterItem)),
-  // );
-  // console.log("windowResults: ", windowResults);
-  // const currentTime = performance.now();
-  // const elapsedTime = currentTime - startTime;
-  // const seconds = elapsedTime / 1000;
+    // Handle response
+    console.log('response: ', response)
+  }
+  const windowResults = await sendToBackground()
+  console.log(windowResults)
+
+  // const currentTime = performance.now()
+  // const elapsedTime = currentTime - startTime
+  // const seconds = elapsedTime / 1000
 
   // for (const windowResult of windowResults) {
   //   if (windowResult === undefined) continue;
@@ -111,46 +105,6 @@ function scanPage() {
   }
 
   return pageObj
-}
-
-function extractTable(table: HTMLTableElement) {
-  const result: Record<string, string | Record<string, string>> = {}
-  let tempMap: Record<string, string> = {}
-  let tempSubTableName = ''
-
-  for (let i = 0; i < table.rows.length; i++) {
-    const tableRow = table.rows[i]
-    const key = tableRow.cells[0].textContent?.trim()
-    const value = tableRow.cells[1].textContent?.trim()
-    const isIndented = containsPhrase(tableRow)
-
-    if (isIndented && key && value) {
-      // If this row is indented just add it to tempMap
-      tempMap[key] = value
-    }
-    else if (!isIndented && key) {
-      // This row is not part of a sub table
-      if (Object.keys(tempMap).length > 0) {
-        // add current sub table to result if there is one
-        result[tempSubTableName] = tempMap
-        tempMap = {}
-      }
-      tempSubTableName = key
-      if (value)
-        result[key] = value
-    }
-  }
-  if (Object.keys(tempMap).length > 0) {
-    result[tempSubTableName] = tempMap
-  }
-
-  return result
-}
-
-function containsPhrase(row: HTMLTableRowElement, phrase: string = 'indent') {
-  return Array.from(row.classList).some(className =>
-    className.includes(phrase),
-  )
 }
 </script>
 
