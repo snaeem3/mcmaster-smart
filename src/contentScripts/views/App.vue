@@ -5,16 +5,14 @@ import { sendMessage } from 'webext-bridge/content-script'
 import type { McMasterItem } from '../../Item'
 import createSearchQueries from './createSearchQueries'
 import extractTable from '~/utils/extractTable'
+import getBestMatchingProduct from '~/bestMatchingProduct'
+import type { MSCItem } from '~/msc/MSCItem'
 
 const [show, toggle] = useToggle(false)
 const mcmasterItemTitle = ref<string>('')
+const foundProducts = ref<Partial<MSCItem>[]>([])
 
 async function handleSearchMSC(DEBUG = false) {
-  // const activeTab = await chrome.tabs.query({
-  //   active: true,
-  //   currentWindow: true,
-  // })
-  // console.log('activeTab: ', activeTab)
   // const startTime = performance.now()
 
   const mcmasterItem: Partial<McMasterItem> = scanPage()
@@ -38,35 +36,38 @@ async function handleSearchMSC(DEBUG = false) {
     const response = await sendMessage('EXECUTE-MSC', {
       urls,
       mcmasterItemJSON: JSON.stringify(mcmasterItem),
-      DEBUG: true,
+      DEBUG: false,
     }, 'background')
 
     // Handle response
     console.log('response: ', response)
+    return response.windowResults
   }
   const windowResults = await sendToBackground()
-  console.log(windowResults)
+  console.log('windowResults: ', windowResults)
 
   // const currentTime = performance.now()
   // const elapsedTime = currentTime - startTime
   // const seconds = elapsedTime / 1000
 
-  // for (const windowResult of windowResults) {
-  //   if (windowResult === undefined) continue;
-  //   const THRESHOLD = 0.1;
-  //   const { bestProduct, score, error } = getBestMatchingProduct(
-  //     mcmasterItem,
-  //     windowResult,
-  //     THRESHOLD,
-  //   );
-  //   if (error) console.error(error);
-  //   else if (bestProduct) {
-  //     console.log("bestProduct: ", bestProduct);
-  //     console.log("score: ", score);
-  //     // setBestMatchedProduct(bestProduct, score);
-  //     setFoundProducts([bestProduct], [score]);
-  //   }
-  // }
+  for (const windowResult of windowResults) {
+    if (windowResult === undefined)
+      continue
+    const THRESHOLD = 0.1
+    const { bestProduct, score, error } = getBestMatchingProduct(
+      mcmasterItem,
+      windowResult,
+      THRESHOLD,
+    )
+    if (error) {
+      console.error(error)
+    }
+    else if (bestProduct) {
+      console.log('bestProduct: ', bestProduct)
+      console.log('score: ', score)
+      foundProducts.value.push(bestProduct)
+    }
+  }
 
   // if (timerResult) {
   //   timerResult.textContent = `Found in ${Math.round(seconds * 100) / 100}s`;
@@ -119,9 +120,8 @@ function scanPage() {
       :class="show ? 'opacity-100' : 'opacity-0'"
     >
       <h1 class="text-lg">
-        Vitesse WebExt
+        McMaster Smart
       </h1>
-      <h3>McMaster Smart</h3>
       <button id="search-btn" @click="handleSearchMSC">
         Search MSC
       </button>
@@ -132,7 +132,13 @@ function scanPage() {
         <p id="item-info" />
       </div>
       <div>
-        <ol id="match-list" />
+        <ol id="match-list">
+          <li v-for="foundProduct in foundProducts" :key="foundProduct?.mscId">
+            <a :href="foundProduct.url?.toString()" target="_blank">
+              {{ foundProduct?.primaryName }}
+            </a>
+          </li>
+        </ol>
       </div>
       <div>
         <p id="timer-result" />
