@@ -1,4 +1,5 @@
 export default async function waitForTabToLoad(tabId: number): Promise<void> {
+  // console.log(`Hello from waitForTabToLoad. tabID: ${tabId}`)
   return new Promise((resolve) => {
     browser.tabs.onUpdated.addListener(
       function listener(updatedTabId, changeInfo) {

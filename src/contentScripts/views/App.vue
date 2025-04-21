@@ -7,17 +7,19 @@ import createSearchQueries from './createSearchQueries'
 import extractTable from '~/utils/extractTable'
 import getBestMatchingProduct from '~/bestMatchingProduct'
 import type { MSCItem } from '~/msc/MSCItem'
+import FeatureList from '~/components/FeatureList.vue'
+import flattenRecord from '~/flattenRecord'
 
-const [show, toggle] = useToggle(false)
-const mcmasterItemTitle = ref<string>('')
+const [show, toggle] = useToggle(true)
+const mcmasterItemCurrent = ref<Partial<McMasterItem>>({})
 const foundProducts = ref<Partial<MSCItem>[]>([])
 
 async function handleSearchMSC(DEBUG = false) {
   // const startTime = performance.now()
-
+  foundProducts.value = []
   const mcmasterItem: Partial<McMasterItem> = scanPage()
   if (mcmasterItem.primaryName)
-    mcmasterItemTitle.value = mcmasterItem.primaryName
+    mcmasterItemCurrent.value = mcmasterItem
 
   // Create search queries from extracted mcmaster data
   const searchQueries = createSearchQueries(mcmasterItem)
@@ -107,6 +109,12 @@ function scanPage() {
 
   return pageObj
 }
+
+onMounted(() => {
+  const mcmasterItem = scanPage()
+  if (mcmasterItem.primaryName)
+    mcmasterItemCurrent.value = mcmasterItem
+})
 </script>
 
 <template>
@@ -127,9 +135,11 @@ function scanPage() {
       </button>
       <div>
         <h4 id="item-title">
-          {{ mcmasterItemTitle }}
+          {{ mcmasterItemCurrent.primaryName }}
         </h4>
-        <p id="item-info" />
+        <div id="item-info">
+          <FeatureList v-if="mcmasterItemCurrent.itemFeatures" :features="flattenRecord(mcmasterItemCurrent.itemFeatures)" />
+        </div>
       </div>
       <div>
         <ol id="match-list">

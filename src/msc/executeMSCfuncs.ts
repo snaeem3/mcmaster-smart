@@ -1,5 +1,6 @@
 import stringSimilarity from 'string-similarity-js'
 import waitForTabToLoad from '../utils/waitForTabToLoad'
+import flattenRecord from '../flattenRecord'
 import type { MSCItem } from './MSCItem'
 import {
   preprocessCategoryHeader,
@@ -268,25 +269,4 @@ function getFeatureMatches(
   }
   // Filter out empty/non-matches
   return matchingFeatures.filter(Boolean)
-}
-
-function flattenRecord(
-  input: Record<string, string | Record<string, string>>,
-): Record<string, string> {
-  const result: Record<string, string> = {}
-
-  for (const [key, value] of Object.entries(input)) {
-    if (typeof value === 'string') {
-      result[key] = value
-    }
-    else {
-      // It's a nested record
-      for (const [subKey, subValue] of Object.entries(value)) {
-        const newKey = `${key} ${subKey}`
-        result[newKey] = subValue
-      }
-    }
-  }
-
-  return result
 }
