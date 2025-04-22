@@ -17,12 +17,9 @@ const foundProducts = ref<Partial<MSCItem>[]>([])
 async function handleSearchMSC(DEBUG = false) {
   // const startTime = performance.now()
   foundProducts.value = []
-  const mcmasterItem: Partial<McMasterItem> = scanPage()
-  if (mcmasterItem.primaryName)
-    mcmasterItemCurrent.value = mcmasterItem
 
   // Create search queries from extracted mcmaster data
-  const searchQueries = createSearchQueries(mcmasterItem)
+  const searchQueries = createSearchQueries(mcmasterItemCurrent.value)
   if (DEBUG) {
     searchQueries.forEach((searchQuery, index) =>
       console.log(`searchQuery(${index}): ${searchQuery.toString()}`),
@@ -34,10 +31,13 @@ async function handleSearchMSC(DEBUG = false) {
       `https://www.mscdirect.com/browse/tn?rd=k&${searchQuery.toString()}`,
   )
 
+  console.log('mcmasterItemCurrent.value: ', mcmasterItemCurrent)
+  console.log('JSON.stringify(mcmasterItemCurrent.value): ', JSON.stringify(mcmasterItemCurrent.value))
+
   const sendToBackground = async () => {
     const response = await sendMessage('EXECUTE-MSC', {
       urls,
-      mcmasterItemJSON: JSON.stringify(mcmasterItem),
+      mcmasterItemJSON: JSON.stringify(mcmasterItemCurrent.value),
       DEBUG: false,
     }, 'background')
 
@@ -57,7 +57,7 @@ async function handleSearchMSC(DEBUG = false) {
       continue
     const THRESHOLD = 0.1
     const { bestProduct, score, error } = getBestMatchingProduct(
-      mcmasterItem,
+      mcmasterItemCurrent.value,
       windowResult,
       THRESHOLD,
     )
@@ -115,6 +115,11 @@ onMounted(() => {
   if (mcmasterItem.primaryName)
     mcmasterItemCurrent.value = mcmasterItem
 })
+
+function onFeatureUpdate(features: Record<string, string>) {
+  mcmasterItemCurrent.value.itemFeatures = features
+  console.log('onFeatureUpdate: ', mcmasterItemCurrent.value)
+}
 </script>
 
 <template>
@@ -138,7 +143,7 @@ onMounted(() => {
           {{ mcmasterItemCurrent.primaryName }}
         </h4>
         <div id="item-info">
-          <FeatureList v-if="mcmasterItemCurrent.itemFeatures" :features="flattenRecord(mcmasterItemCurrent.itemFeatures)" />
+          <FeatureList v-if="mcmasterItemCurrent.itemFeatures" :features="flattenRecord(mcmasterItemCurrent.itemFeatures)" @update:features="onFeatureUpdate" />
         </div>
       </div>
       <div>
