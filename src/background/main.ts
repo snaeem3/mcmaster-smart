@@ -2,6 +2,7 @@ import { onMessage, sendMessage } from 'webext-bridge/background'
 import type { Tabs } from 'webextension-polyfill'
 import executeMSCfuncs from '~/msc/executeMSCfuncs'
 import type { McMasterItem } from '~/Item'
+import type ExecuteMSCSettings from '~/msc/settings'
 
 // only on dev mode
 if (import.meta.hot) {
@@ -64,13 +65,14 @@ onMessage('get-current-tab', async () => {
   }
 })
 
-onMessage('EXECUTE-MSC', async ({ data }: { data: { urls: string[], mcmasterItemJSON: string, DEBUG: boolean } }) => {
+onMessage('EXECUTE-MSC', async ({ data }: { data: { urls: string[], mcmasterItemJSON: string, DEBUG: boolean, settingsJSON: string } }) => {
   // Do whatever processing you need here.
   console.log('data: ', data)
-  const { urls, mcmasterItemJSON, DEBUG } = data
+  const { urls, mcmasterItemJSON, DEBUG, settingsJSON } = data
   const mcmasterItem = JSON.parse(mcmasterItemJSON) as Partial<McMasterItem>
   console.log('mcmasterItem: ', mcmasterItem)
-
+  const settings = JSON.parse(settingsJSON) as ExecuteMSCSettings
+  console.log('settings: ', settings)
   // const testURL
   //   = 'https://www.mscdirect.com/browse/tn?rd=k&searchterm=ID+Tag+Cable+Tie'
 
@@ -81,8 +83,8 @@ onMessage('EXECUTE-MSC', async ({ data }: { data: { urls: string[], mcmasterItem
     // })
     windowResults = await Promise.all(
       DEBUG
-        ? [executeMSCfuncs(urls[0], mcmasterItem)]
-        : urls.map(url => executeMSCfuncs(url, mcmasterItem)),
+        ? [executeMSCfuncs(urls[0], mcmasterItem, settings)]
+        : urls.map(url => executeMSCfuncs(url, mcmasterItem, settings)),
     )
   }
   catch (error) {
@@ -92,6 +94,5 @@ onMessage('EXECUTE-MSC', async ({ data }: { data: { urls: string[], mcmasterItem
 
   return {
     windowResults,
-
   }
 })

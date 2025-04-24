@@ -9,10 +9,13 @@ import getBestMatchingProduct from '~/bestMatchingProduct'
 import type { MSCItem } from '~/msc/MSCItem'
 import FeatureList from '~/components/FeatureList.vue'
 import flattenRecord from '~/flattenRecord'
+import type ExecuteMSCSettings from '~/msc/settings'
+import { defaultSettings } from '~/msc/settings'
 
 const [show, toggle] = useToggle(true)
 const mcmasterItemCurrent = ref<Partial<McMasterItem>>({})
 const foundProducts = ref<Partial<MSCItem>[]>([])
+const settings = ref<ExecuteMSCSettings>()
 
 async function handleSearchMSC(DEBUG = false) {
   // const startTime = performance.now()
@@ -35,10 +38,12 @@ async function handleSearchMSC(DEBUG = false) {
   console.log('JSON.stringify(mcmasterItemCurrent.value): ', JSON.stringify(mcmasterItemCurrent.value))
 
   const sendToBackground = async () => {
+    console.log('settings.value: ', settings.value)
     const response = await sendMessage('EXECUTE-MSC', {
       urls,
       mcmasterItemJSON: JSON.stringify(mcmasterItemCurrent.value),
       DEBUG: false,
+      settingsJSON: JSON.stringify(settings.value),
     }, 'background')
 
     // Handle response
@@ -114,23 +119,30 @@ onMounted(() => {
   const mcmasterItem = scanPage()
   if (mcmasterItem.primaryName)
     mcmasterItemCurrent.value = mcmasterItem
+  settings.value = defaultSettings
 })
 
 function onFeatureUpdate(features: Record<string, string>) {
   mcmasterItemCurrent.value.itemFeatures = features
   console.log('onFeatureUpdate: ', mcmasterItemCurrent.value)
 }
+
+function onSettingsUpdate(newSettings: ExecuteMSCSettings) {
+  settings.value = newSettings
+}
 </script>
 
 <template>
-  <div class="fixed right-0 bottom-0 m-5 z-100 flex items-end font-sans select-none leading-1em">
+  <div class="fixed right-0 bottom-0 flex items-end font-sans select-none leading-1em z-[10000]">
     <div
       v-show="show"
-      class="bg-white text-gray-800 rounded-lg shadow w-max h-min"
+      class="bg-white text-gray-800 rounded-lg shadow w-max h-min max-h-[90vh] overflow-y-auto"
       p="x-4 y-2"
       m="y-auto r-2"
       transition="opacity duration-300"
       :class="show ? 'opacity-100' : 'opacity-0'"
+      max-h-screen
+      overflow-y-auto
     >
       <h1 class="text-lg">
         McMaster Smart
@@ -146,6 +158,7 @@ function onFeatureUpdate(features: Record<string, string>) {
           <FeatureList v-if="mcmasterItemCurrent.itemFeatures" :features="flattenRecord(mcmasterItemCurrent.itemFeatures)" @update:features="onFeatureUpdate" />
         </div>
       </div>
+      <MSCSettings @update:settings="onSettingsUpdate" />
       <div>
         <ol id="match-list">
           <li v-for="foundProduct in foundProducts" :key="foundProduct?.mscId">

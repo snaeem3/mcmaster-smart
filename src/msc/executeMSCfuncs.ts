@@ -6,6 +6,8 @@ import {
   preprocessCategoryHeader,
   preprocessCategoryOption,
 } from './preprocessMSC'
+import type ExecuteMSCSettings from './settings'
+import { defaultSettings } from './settings'
 import type { McMasterItem } from '~/Item'
 
 interface FeatureMatch {
@@ -20,7 +22,8 @@ export default async function executeMSCfuncs(
   mcmasterItem?: Partial<McMasterItem>,
   // type: string = 'popup',
   // type: Windows.CreateType = 'popup',
-  DEBUG: boolean = false,
+  // DEBUG: boolean = false,
+  settings: ExecuteMSCSettings = defaultSettings,
 ) {
   console.log('Hello from executeMSCfuncs')
   const window = await browser.windows.create({
@@ -40,21 +43,11 @@ export default async function executeMSCfuncs(
       throw new Error('Tab or Tab ID is undefined.')
     }
 
-    console.log('hopeful msc tab: ', tab)
-    console.log('tab.id: ', tab.id)
-    await waitForTabToLoad(tab.id)
-    if (DEBUG) {
-      try {
-        const mscTEST = await browser.tabs.sendMessage(tab.id, {
-          type: 'TEST',
-        })
-
-        console.log('mscTEST: ', mscTEST)
-      }
-      catch (error) {
-        console.error('Error sending "TEST" message: ', error)
-      }
+    if (settings.printTabInfo) {
+      console.log('hopeful msc tab: ', tab)
+      console.log('tab.id: ', tab.id)
     }
+    await waitForTabToLoad(tab.id)
 
     // Handle 0 results found page
     let hasResults = true
@@ -109,7 +102,8 @@ export default async function executeMSCfuncs(
     catch (error) {
       console.error('Error sending HEADERS: ', error)
     }
-    console.log('accordionHeaders: ', accordionHeaders)
+    if (settings.printAccordionHeaders)
+      console.log('accordionHeaders: ', accordionHeaders)
 
     const flatMcMasterFeatures = mcmasterItem?.itemFeatures
       ? flattenRecord(mcmasterItem?.itemFeatures)
@@ -122,19 +116,25 @@ export default async function executeMSCfuncs(
           (header): header is string => header !== undefined,
         ),
         flatMcMasterFeatures,
+        settings.bestMatchingProductThreshold,
       )
-      console.log(
-        `matches between flatMcMasterFeatures and MSC accordionHeaders: `,
-        matches,
-      )
+
+      if (settings.printFeatureMatches) {
+        console.log(
+          `matches between flatMcMasterFeatures and MSC accordionHeaders: `,
+          matches,
+        )
+      }
 
       // for each match, go through the MSC page and view the available checkbox options
       for (const match of matches) {
-        console.log('match: ', match)
-        console.log(
-          `flatMcMasterFeatures['${match.mcMasterName}']: `,
-          flatMcMasterFeatures[match.mcMasterName],
-        )
+        if (settings.printFeatureMatches) {
+          console.log('match: ', match)
+          console.log(
+            `flatMcMasterFeatures['${match.mcMasterName}']: `,
+            flatMcMasterFeatures[match.mcMasterName],
+          )
+        }
         let categoryOptions: string[] = []
         try {
           categoryOptions = await browser.tabs.sendMessage(tab.id, {
@@ -145,9 +145,9 @@ export default async function executeMSCfuncs(
         catch (error) {
           console.error('Error sending CATEGORY_OPTIONS: ', error)
         }
-        console.log(`${match.MSCName} categoryOptions: `, categoryOptions)
+        if (settings.printCategoryOptions)
+          console.log(`${match.MSCName} categoryOptions: `, categoryOptions)
         // Check if any option values match the featureValue
-        const THRESHOLD = 0.75
         let optionsToSelect: string[] = []
 
         if (categoryOptions) {
@@ -161,12 +161,12 @@ export default async function executeMSCfuncs(
                 normalizedOption,
                 match.mcMasterValue,
               )
-              if (DEBUG) {
+              if (settings.printFeatureSimilarityScores) {
                 console.log(
                   `${option} -> ${normalizedOption} vs. ${match.mcMasterValue} | ${optionSimilarity}`,
                 )
               }
-              return optionSimilarity > THRESHOLD
+              return optionSimilarity > settings.optionSimilarityThreshold
             })
             // Sort the options by similarity score
             .sort(
@@ -175,7 +175,8 @@ export default async function executeMSCfuncs(
                 - stringSimilarity(a, match.mcMasterValue),
             )
         }
-        console.log('optionsToSelect: ', optionsToSelect)
+        if (settings.printOptionsToSelect)
+          console.log('optionsToSelect: ', optionsToSelect)
 
         // if a checkbox matches the item feature, click it
         let appliedFilters: string[] = []
@@ -193,7 +194,8 @@ export default async function executeMSCfuncs(
             console.error('Error sending APPLY_FILTERS: ', error)
           }
         }
-        console.log(`${match.MSCName} appliedFilters: `, appliedFilters)
+        if (settings.printAppliedFilters)
+          console.log(`${match.MSCName} appliedFilters: `, appliedFilters)
       }
     }
     // #endregion
@@ -207,10 +209,12 @@ export default async function executeMSCfuncs(
     catch (error) {
       console.error('Error sending EXTRACT_SEARCH_RESULTS: ', error)
     }
-    console.log(`${mscItems.length} mscItems final: `, mscItems)
+    if (settings.printMSCItems)
+      console.log(`${mscItems.length} mscItems final: `, mscItems)
     // #endregion
 
-    await browser.windows.remove(window.id)
+    if (settings.closeWindows)
+      await browser.windows.remove(window.id)
 
     return mscItems
   }
@@ -223,8 +227,8 @@ export default async function executeMSCfuncs(
 function getFeatureMatches(
   categoryHeaders: string[],
   flatFeatures: Record<string, string>,
-  caseInsensitive: boolean = true,
   THRESHOLD = 0.9,
+  caseInsensitive: boolean = true,
   DEBUG = false,
 ) {
   const mcmasterFeatures = Object.keys(flatFeatures)
