@@ -13,6 +13,7 @@ import type ExecuteMSCSettings from '~/msc/settings'
 import { defaultSettings } from '~/msc/settings'
 
 const [show, toggle] = useToggle(true)
+const [showSettings, toggleSettings] = useToggle(false)
 const mcmasterItemCurrent = ref<Partial<McMasterItem>>({})
 const foundProducts = ref<Partial<MSCItem>[]>([])
 const settings = ref<ExecuteMSCSettings>()
@@ -75,6 +76,8 @@ async function handleSearchMSC(DEBUG = false) {
       foundProducts.value.push(bestProduct)
     }
   }
+
+  showSettings.value = false
 
   // if (timerResult) {
   //   timerResult.textContent = `Found in ${Math.round(seconds * 100) / 100}s`;
@@ -147,19 +150,11 @@ function onSettingsUpdate(newSettings: ExecuteMSCSettings) {
       <h1 class="text-lg">
         McMaster Smart
       </h1>
-      <button id="search-btn" @click="handleSearchMSC">
+      <button id="search-btn" @click="handleSearchMSC()">
         Search MSC
       </button>
-      <div>
-        <h4 id="item-title">
-          {{ mcmasterItemCurrent.primaryName }}
-        </h4>
-        <div id="item-info">
-          <FeatureList v-if="mcmasterItemCurrent.itemFeatures" :features="flattenRecord(mcmasterItemCurrent.itemFeatures)" @update:features="onFeatureUpdate" />
-        </div>
-      </div>
-      <MSCSettings @update:settings="onSettingsUpdate" />
-      <div>
+      <div v-if="foundProducts.length > 0">
+        <h2>Found Products</h2>
         <ol id="match-list">
           <li v-for="foundProduct in foundProducts" :key="foundProduct?.mscId">
             <a :href="foundProduct.url?.toString()" target="_blank">
@@ -168,6 +163,18 @@ function onSettingsUpdate(newSettings: ExecuteMSCSettings) {
           </li>
         </ol>
       </div>
+      <div>
+        <h4 id="item-title">
+          {{ mcmasterItemCurrent.primaryName }}
+        </h4>
+        <div id="item-info">
+          <FeatureList v-if="mcmasterItemCurrent.itemFeatures" :features="flattenRecord(mcmasterItemCurrent.itemFeatures)" @update:features="onFeatureUpdate" />
+        </div>
+      </div>
+      <button class="" @click="toggleSettings()">
+        {{ showSettings ? `Hide Settings` : `Show Settings` }}
+      </button>
+      <MSCSettings v-show="showSettings" @update:settings="onSettingsUpdate" />
       <div>
         <p id="timer-result" />
       </div>
