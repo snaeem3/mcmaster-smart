@@ -1,7 +1,8 @@
 export default interface ExecuteMSCSettings {
   closeWindows: boolean
-  bestMatchingProductThreshold: number
   optionSimilarityThreshold: number
+  featureMatchThreshhold: number
+  bestMatchingProductThreshold: number
   printTabInfo: boolean
   printAccordionHeaders: boolean
   printFeatureSimilarityScores: boolean
@@ -14,8 +15,9 @@ export default interface ExecuteMSCSettings {
 
 export const defaultSettings: ExecuteMSCSettings = {
   closeWindows: true,
-  bestMatchingProductThreshold: 0.1,
   optionSimilarityThreshold: 0.75,
+  featureMatchThreshhold: 0.9,
+  bestMatchingProductThreshold: 0.1,
   printTabInfo: false,
   printAccordionHeaders: false,
   printFeatureSimilarityScores: false,

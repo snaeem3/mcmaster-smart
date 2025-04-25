@@ -65,7 +65,7 @@ onMessage('get-current-tab', async () => {
   }
 })
 
-onMessage('EXECUTE-MSC', async ({ data }: { data: { urls: string[], mcmasterItemJSON: string, DEBUG: boolean, settingsJSON: string } }) => {
+onMessage('EXECUTE-MSC', async ({ data }) => {
   // Do whatever processing you need here.
   console.log('data: ', data)
   const { urls, mcmasterItemJSON, DEBUG, settingsJSON } = data
@@ -86,13 +86,13 @@ onMessage('EXECUTE-MSC', async ({ data }: { data: { urls: string[], mcmasterItem
         ? [executeMSCfuncs(urls[0], mcmasterItem, settings)]
         : urls.map(url => executeMSCfuncs(url, mcmasterItem, settings)),
     )
+    console.log('windowResults: ', windowResults)
+    return {
+      windowResults: windowResults.filter(windowResult => windowResult !== undefined),
+    }
   }
   catch (error) {
     console.error('Error getting windowResults: ', error)
-  }
-  console.log('windowResults: ', windowResults)
-
-  return {
-    windowResults,
+    return { error: error instanceof Error ? error : new Error(String(error)) }
   }
 })

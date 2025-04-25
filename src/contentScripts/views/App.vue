@@ -17,72 +17,14 @@ const [showSettings, toggleSettings] = useToggle(false)
 const mcmasterItemCurrent = ref<Partial<McMasterItem>>({})
 const foundProducts = ref<Partial<MSCItem>[]>([])
 const settings = ref<ExecuteMSCSettings>()
+const searchErrors = ref<Error[]>([])
 
-async function handleSearchMSC(DEBUG = false) {
-  // const startTime = performance.now()
-  foundProducts.value = []
-
-  // Create search queries from extracted mcmaster data
-  const searchQueries = createSearchQueries(mcmasterItemCurrent.value)
-  if (DEBUG) {
-    searchQueries.forEach((searchQuery, index) =>
-      console.log(`searchQuery(${index}): ${searchQuery.toString()}`),
-    )
-  }
-
-  const urls = searchQueries.map(
-    searchQuery =>
-      `https://www.mscdirect.com/browse/tn?rd=k&${searchQuery.toString()}`,
-  )
-
-  console.log('mcmasterItemCurrent.value: ', mcmasterItemCurrent)
-  console.log('JSON.stringify(mcmasterItemCurrent.value): ', JSON.stringify(mcmasterItemCurrent.value))
-
-  const sendToBackground = async () => {
-    console.log('settings.value: ', settings.value)
-    const response = await sendMessage('EXECUTE-MSC', {
-      urls,
-      mcmasterItemJSON: JSON.stringify(mcmasterItemCurrent.value),
-      DEBUG: false,
-      settingsJSON: JSON.stringify(settings.value),
-    }, 'background')
-
-    // Handle response
-    console.log('response: ', response)
-    return response.windowResults
-  }
-  const windowResults = await sendToBackground()
-  console.log('windowResults: ', windowResults)
-
-  // const currentTime = performance.now()
-  // const elapsedTime = currentTime - startTime
-  // const seconds = elapsedTime / 1000
-
-  for (const windowResult of windowResults) {
-    if (windowResult === undefined)
-      continue
-    const THRESHOLD = 0.1
-    const { bestProduct, score, error } = getBestMatchingProduct(
-      mcmasterItemCurrent.value,
-      windowResult,
-      THRESHOLD,
-    )
-    if (error) {
-      console.error(error)
-    }
-    else if (bestProduct) {
-      console.log('bestProduct: ', bestProduct)
-      console.log('score: ', score)
-      foundProducts.value.push(bestProduct)
-    }
-  }
-
-  showSettings.value = false
-
-  // if (timerResult) {
-  //   timerResult.textContent = `Found in ${Math.round(seconds * 100) / 100}s`;
-  // }
-}
+onMounted(() => {
+  const mcmasterItem = scanPage()
+  if (mcmasterItem.primaryName)
+    mcmasterItemCurrent.value = mcmasterItem
+  settings.value = defaultSettings
+})
 
 function scanPage() {
   const title = document.querySelector('h1')?.textContent
@@ -118,12 +60,88 @@ function scanPage() {
   return pageObj
 }
 
-onMounted(() => {
-  const mcmasterItem = scanPage()
-  if (mcmasterItem.primaryName)
-    mcmasterItemCurrent.value = mcmasterItem
-  settings.value = defaultSettings
-})
+async function handleSearchMSC(DEBUG = false) {
+  // const startTime = performance.now()
+  foundProducts.value = []
+  searchErrors.value = []
+
+  // Create search queries from extracted mcmaster data
+  const searchQueries = createSearchQueries(mcmasterItemCurrent.value)
+  if (DEBUG) {
+    searchQueries.forEach((searchQuery, index) =>
+      console.log(`searchQuery(${index}): ${searchQuery.toString()}`),
+    )
+  }
+
+  const urls = searchQueries.map(
+    searchQuery =>
+      `https://www.mscdirect.com/browse/tn?rd=k&${searchQuery.toString()}`,
+  )
+
+  // console.log('mcmasterItemCurrent.value: ', mcmasterItemCurrent)
+  // console.log('JSON.stringify(mcmasterItemCurrent.value): ', JSON.stringify(mcmasterItemCurrent.value))
+
+  const sendToBackground = async () => {
+    console.log('settings.value: ', settings.value)
+    const response = await sendMessage('EXECUTE-MSC', {
+      urls,
+      mcmasterItemJSON: JSON.stringify(mcmasterItemCurrent.value),
+      DEBUG: false,
+      settingsJSON: JSON.stringify(settings.value),
+    }, 'background')
+
+    // Handle response
+    console.log('response: ', response)
+    return response
+  }
+  const { windowResults, error } = await sendToBackground()
+  console.log('windowResults: ', windowResults)
+
+  if (error)
+    searchErrors.value.push(error)
+
+  // const currentTime = performance.now()
+  // const elapsedTime = currentTime - startTime
+  // const seconds = elapsedTime / 1000
+
+  if (windowResults) {
+    for (let i = 0; i < windowResults.length; i++) {
+      const windowResult = windowResults[i]
+      if (windowResult instanceof Error) {
+        searchErrors.value.push(windowResult)
+        continue
+      }
+
+      if (windowResult.length === 0) {
+        searchErrors.value.push({ name: `No results from search ${i}`, message: '' })
+        continue
+      }
+      const { bestProduct, score, error } = getBestMatchingProduct(
+        mcmasterItemCurrent.value,
+        windowResult,
+        settings.value?.bestMatchingProductThreshold,
+      )
+      if (error) {
+        console.error(error)
+        searchErrors.value.push({ name: error, message: `score: ${score}` })
+      }
+      else if (bestProduct) {
+        console.log('bestProduct: ', bestProduct)
+        console.log('score: ', score)
+        foundProducts.value.push(bestProduct)
+      }
+    }
+  }
+  else {
+    searchErrors.value.push({ name: 'No results', message: '' })
+  }
+
+  showSettings.value = false
+
+  // if (timerResult) {
+  //   timerResult.textContent = `Found in ${Math.round(seconds * 100) / 100}s`;
+  // }
+}
 
 function onFeatureUpdate(features: Record<string, string>) {
   mcmasterItemCurrent.value.itemFeatures = features
@@ -162,6 +180,14 @@ function onSettingsUpdate(newSettings: ExecuteMSCSettings) {
             </a>
           </li>
         </ol>
+      </div>
+      <div v-if="searchErrors.length > 0">
+        <h2>Error(s)</h2>
+        <ul>
+          <li v-for="error in searchErrors" :key="error.name">
+            {{ `${error.name}${error.message.length > 0 ? `: ${error.message}` : ''}` }}
+          </li>
+        </ul>
       </div>
       <div>
         <h4 id="item-title">

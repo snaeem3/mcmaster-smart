@@ -116,7 +116,7 @@ export default async function executeMSCfuncs(
           (header): header is string => header !== undefined,
         ),
         flatMcMasterFeatures,
-        settings.bestMatchingProductThreshold,
+        settings.featureMatchThreshhold,
       )
 
       if (settings.printFeatureMatches) {
@@ -227,7 +227,7 @@ export default async function executeMSCfuncs(
 function getFeatureMatches(
   categoryHeaders: string[],
   flatFeatures: Record<string, string>,
-  THRESHOLD = 0.9,
+  THRESHOLD = defaultSettings.featureMatchThreshhold,
   caseInsensitive: boolean = true,
   DEBUG = false,
 ) {

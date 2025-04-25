@@ -3,8 +3,8 @@ import type { McMasterItem } from './Item'
 import type { MSCItem } from './msc/MSCItem'
 
 export default function getBestMatchingProduct(
-  mcmasterProd: Partial<McMasterItem>,
-  mscProds: Partial<MSCItem>[],
+  mcmasterProd: Partial<McMasterItem> | McMasterItem,
+  mscProds: (Partial<MSCItem> | MSCItem)[],
   minScore = 0.5,
 ) {
   if (mscProds.length <= 0)
