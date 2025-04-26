@@ -21,6 +21,20 @@ function disable(index: number) {
   disabledFeatures.push(feature)
 }
 
+function moveAllElements(fromArray: any[], toArray: any[]) {
+  while (fromArray.length > 0) {
+    toArray.push(fromArray.shift())
+  }
+}
+
+function enableAll() {
+  moveAllElements(disabledFeatures, enabledFeatures)
+}
+
+function disableAll() {
+  moveAllElements(enabledFeatures, disabledFeatures)
+}
+
 function moveUp(index: number) {
   if (index === 0)
     return
@@ -82,34 +96,48 @@ watch(
 </script>
 
 <template>
+  <div>
+    <button :disabled="disabledFeatures.length <= 0" @click="enableAll()">
+      Enable All
+    </button>
+    <button :disabled="enabledFeatures.length <= 0" @click="disableAll()">
+      Disable All
+    </button>
+  </div>
   <ol>
-    <li v-for="([feature, value], index) of enabledFeatures" :key="feature" class="flex ">
-      <button
-        v-if="index !== 0"
-        class="mx-1"
-        @mousedown="startHold(() => moveToTop(index), index)"
-        @mouseup="cancelHold(() => moveUp(index))"
-        @mouseleave="clearHold"
-      >
-        ⬆️
-      </button>
+    <li v-for="([feature, value], index) of enabledFeatures" :key="feature" class="flex justify-between hover:bg-yellow-200 px-1">
+      <p><strong>{{ `${feature} : ` }}</strong> {{ value }}</p>
+      <div class="flex gap-2 items-center">
+        <button
+          v-if="index !== 0"
+          class="i-material-symbols:arrow-upward text-2xl p-2 rounded transition-colors"
+          bg="green-500 hover:green-700"
+          text="white"
+          @mousedown="startHold(() => moveToTop(index), index)"
+          @mouseup="cancelHold(() => moveUp(index))"
+          @mouseleave="clearHold"
+        />
 
-      <button
-        class="mx-1"
-        @mousedown="startHold(() => moveToBottom(index), index)"
-        @mouseup="cancelHold(() => moveDown(index))"
-        @mouseleave="clearHold"
-      >
-        ⬇️
-      </button>
-      <strong>{{ `${feature} : ` }}</strong> {{ value }}
-      <button @click="disable(index)">
-        disable
-      </button>
+        <button
+          class="i-material-symbols:arrow-downward text-2xl p-2 rounded transition-colors"
+          bg="blue-500 hover:blue-700"
+          text="white"
+          @mousedown="startHold(() => moveToBottom(index), index)"
+          @mouseup="cancelHold(() => moveDown(index))"
+          @mouseleave="clearHold"
+        />
+
+        <button
+          class="i-material-symbols:disabled-by-default text-2xl p-2 rounded transition-colors"
+          bg="gray-500 hover:gray-700"
+          text="white"
+          @click="disable(index)"
+        />
+      </div>
     </li>
   </ol>
   <ul>
-    <li v-for="([feature, value], index) in disabledFeatures" :key="feature" class="flex" @click="enable(index)">
+    <li v-for="([feature, value], index) in disabledFeatures" :key="feature" class="flex cursor-pointer hover:bg-yellow-500 p-1" @click="enable(index)">
       <strong>{{ `${feature} : ` }}</strong> {{ value }}
     </li>
   </ul>
@@ -118,5 +146,9 @@ watch(
 <style lang="css">
 ul {
   list-style-type: none;
+}
+
+button {
+  cursor: pointer;
 }
 </style>
