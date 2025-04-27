@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { defineProps } from 'vue'
+import HoldClickButton from '~/components/HoldClickButton.vue'
 
 const props = defineProps<{
   features: Record<string, string>
@@ -136,6 +137,14 @@ watch(
       </div>
     </li>
   </ol>
+  <HoldClickButton
+    :duration="2000"
+    :on-click-action="() => console.log('clicked')"
+    :on-hold-action="() => console.log('held')"
+    final-color="#1abc9c"
+    original-color="#c0392b"
+    icon="i-material-symbols:arrow-downward"
+  />
   <ul>
     <li v-for="([feature, value], index) in disabledFeatures" :key="feature" class="flex cursor-pointer hover:bg-yellow-500 p-1" @click="enable(index)">
       <strong>{{ `${feature} : ` }}</strong> {{ value }}
