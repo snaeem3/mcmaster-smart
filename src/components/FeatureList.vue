@@ -141,9 +141,8 @@ watch(
     :duration="2000"
     :on-click-action="() => console.log('clicked')"
     :on-hold-action="() => console.log('held')"
-    final-color="#1abc9c"
-    original-color="#c0392b"
     icon="i-material-symbols:arrow-downward"
+    icon-color="green-500"
   />
   <ul>
     <li v-for="([feature, value], index) in disabledFeatures" :key="feature" class="flex cursor-pointer hover:bg-yellow-500 p-1" @click="enable(index)">

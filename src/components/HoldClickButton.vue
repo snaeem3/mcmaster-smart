@@ -3,9 +3,8 @@ import { ref } from 'vue'
 
 const props = defineProps<{
   icon: string
+  iconColor?: string
   text?: string
-  originalColor: string
-  finalColor: string
   onClickAction: () => void
   onHoldAction: () => void
 }>()
@@ -37,35 +36,36 @@ function cancelHold() {
   clearTimeout(holdTimeout)
   isHolding.value = false
 }
-
-// const styleObject = computed(() => ({
-//   backgroundColor: props.originalColor,
-// }))
 </script>
 
 <template>
   <button
     class="hold-button"
-    :class="[icon, { holding: isHolding }]"
+    :class="[{ holding: isHolding }]"
     @mousedown="startHold"
     @mouseup="endHold"
     @mouseleave="cancelHold"
   >
-    {{ text }}
+    <div class="text-3xl" :class="[icon]" :bg="iconColor">
+      {{ text }}
+    </div>
   </button>
 </template>
 
 <style scoped>
 .hold-button {
-  padding: 15px 30px;
-  background-color: #3498db;
+  padding: 0.5rem 1rem;
+  background-color: transparent;
   color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
+  border: solid 3px transparent;
+  border-radius: 1rem;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: border-color 0.2s ease;
   position: relative;
+}
+
+.hold-button:hover {
+  border-color: #989898;
 }
 
 .hold-button.holding {
@@ -73,7 +73,23 @@ function cancelHold() {
 }
 
 @keyframes holdProgress {
-  0% { background-color: #3498db; }
-  100% { background-color: #e74c3c; }
+  0% {
+    border-color: #ffffff;
+  }
+  25% {
+    border-right-color: #000000;
+  }
+  50% {
+    border-right-color: #000000;
+    border-bottom-color: #000000;
+  }
+  75% {
+    border-right-color: #000000;
+    border-bottom-color: #000000;
+    border-left-color: #000000;
+  }
+  100% {
+    border-color: #000000;
+  }
 }
 </style>
