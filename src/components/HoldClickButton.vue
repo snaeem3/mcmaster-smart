@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 
-const props = defineProps<{
+defineProps<{
   icon: string
   iconColor?: string
   text?: string
@@ -10,31 +10,33 @@ const props = defineProps<{
 }>()
 
 const isHolding = ref(false)
-let holdTimeout: ReturnType<typeof setTimeout>
-let held = false
+let holdTimer: ReturnType<typeof setTimeout> | null
 
-function startHold() {
-  held = false
+function startHold(action: () => void) {
+  clearHold()
   isHolding.value = true
-
-  holdTimeout = setTimeout(() => {
-    held = true
-    props.onHoldAction()
+  holdTimer = setTimeout(() => {
+    action()
+    holdTimer = null
     isHolding.value = false
-  }, 2000)
+  }, 2000) // 2 seconds hold
 }
 
-function endHold() {
-  clearTimeout(holdTimeout)
-  if (!held) {
-    props.onClickAction()
+function cancelHold(fallbackAction: () => void) {
+  isHolding.value = false
+  if (holdTimer) {
+    clearTimeout(holdTimer)
+    fallbackAction()
+    holdTimer = null
   }
-  isHolding.value = false
 }
 
-function cancelHold() {
-  clearTimeout(holdTimeout)
+function clearHold() {
   isHolding.value = false
+  if (holdTimer) {
+    clearTimeout(holdTimer)
+    holdTimer = null
+  }
 }
 </script>
 
@@ -42,9 +44,9 @@ function cancelHold() {
   <button
     class="hold-button"
     :class="[{ holding: isHolding }]"
-    @mousedown="startHold"
-    @mouseup="endHold"
-    @mouseleave="cancelHold"
+    @mousedown="startHold(onHoldAction)"
+    @mouseup="cancelHold(onClickAction)"
+    @mouseleave="clearHold"
   >
     <div class="text-3xl" :class="[icon]" :bg="iconColor">
       {{ text }}
@@ -60,12 +62,12 @@ function cancelHold() {
   border: solid 3px transparent;
   border-radius: 1rem;
   cursor: pointer;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.1s ease;
   position: relative;
 }
 
 .hold-button:hover {
-  border-color: #989898;
+  border-color: #000000;
 }
 
 .hold-button.holding {

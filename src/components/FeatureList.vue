@@ -58,33 +58,6 @@ function moveToBottom(index: number) {
   enabledFeatures.push(feature)
 }
 
-// Hold-to-top/bottom logic
-let holdTimer: ReturnType<typeof setTimeout> | null = null
-
-// eslint-disable-next-line unused-imports/no-unused-vars
-function startHold(action: () => void, index: number) {
-  clearHold()
-  holdTimer = setTimeout(() => {
-    action()
-    holdTimer = null
-  }, 2000) // 2 seconds hold
-}
-
-function cancelHold(fallbackAction: () => void) {
-  if (holdTimer) {
-    clearTimeout(holdTimer)
-    fallbackAction()
-    holdTimer = null
-  }
-}
-
-function clearHold() {
-  if (holdTimer) {
-    clearTimeout(holdTimer)
-    holdTimer = null
-  }
-}
-
 // Emit enabled features (in order) whenever the list changes
 watch(
   enabledFeatures,
@@ -109,23 +82,18 @@ watch(
     <li v-for="([feature, value], index) of enabledFeatures" :key="feature" class="flex justify-between hover:bg-yellow-200 px-1">
       <p><strong>{{ `${feature} : ` }}</strong> {{ value }}</p>
       <div class="flex gap-2 items-center">
-        <button
+        <HoldClickButton
           v-if="index !== 0"
-          class="i-material-symbols:arrow-upward text-2xl p-2 rounded transition-colors"
-          bg="green-500 hover:green-700"
-          text="white"
-          @mousedown="startHold(() => moveToTop(index), index)"
-          @mouseup="cancelHold(() => moveUp(index))"
-          @mouseleave="clearHold"
+          :on-click-action="() => moveUp(index)"
+          :on-hold-action="() => moveToTop(index)"
+          icon="i-material-symbols:arrow-upward"
+          icon-color="green-500"
         />
-
-        <button
-          class="i-material-symbols:arrow-downward text-2xl p-2 rounded transition-colors"
-          bg="blue-500 hover:blue-700"
-          text="white"
-          @mousedown="startHold(() => moveToBottom(index), index)"
-          @mouseup="cancelHold(() => moveDown(index))"
-          @mouseleave="clearHold"
+        <HoldClickButton
+          :on-click-action="() => moveDown(index)"
+          :on-hold-action="() => moveToBottom(index)"
+          icon="i-material-symbols:arrow-downward"
+          icon-color="blue-500"
         />
 
         <button
@@ -137,13 +105,6 @@ watch(
       </div>
     </li>
   </ol>
-  <HoldClickButton
-    :duration="2000"
-    :on-click-action="() => console.log('clicked')"
-    :on-hold-action="() => console.log('held')"
-    icon="i-material-symbols:arrow-downward"
-    icon-color="green-500"
-  />
   <ul>
     <li v-for="([feature, value], index) in disabledFeatures" :key="feature" class="flex cursor-pointer hover:bg-yellow-500 p-1" @click="enable(index)">
       <strong>{{ `${feature} : ` }}</strong> {{ value }}
