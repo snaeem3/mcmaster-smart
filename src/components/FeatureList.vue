@@ -69,11 +69,21 @@ watch(
 </script>
 
 <template>
-  <div>
-    <button :disabled="disabledFeatures.length <= 0" @click="enableAll()">
+  <div class="flex justify-center gap-3">
+    <button
+      class="px-4 py-2 rounded-lg font-semibold text-blue-600 border border-solid border-gray-100  bg-gray-50 hover:bg-light transition-colors duration-200
+         disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-60 disabled:text-gray-600"
+      :disabled="disabledFeatures.length <= 0"
+      @click="enableAll()"
+    >
       Enable All
     </button>
-    <button :disabled="enabledFeatures.length <= 0" @click="disableAll()">
+    <button
+      class="px-4 py-2 rounded-lg font-semibold text-white border border-solid border-gray-100 bg-blue-600 hover:bg-blue-700 transition-colors duration-200
+         disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-60"
+      :disabled="enabledFeatures.length <= 0"
+      @click="disableAll()"
+    >
       Disable All
     </button>
   </div>

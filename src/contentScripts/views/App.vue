@@ -168,7 +168,13 @@ function onSettingsUpdate(newSettings: ExecuteMSCSettings) {
       <h1 class="text-lg">
         McMaster Smart
       </h1>
-      <button id="search-btn" @click="handleSearchMSC()">
+      <button
+        id="search-btn"
+        class="w-full px-6 py-3 text-lg font-bold rounded-xl border border-solid border-gray-100 shadow-lg bg-gradient-to-r from-indigo-600 to-purple-600
+         hover:from-indigo-700 hover:to-purple-700 text-white transition-all duration-200
+         focus:outline-none focus:ring-4 focus:ring-indigo-300"
+        @click="handleSearchMSC()"
+      >
         Search MSC
       </button>
       <div v-if="foundProducts.length > 0">
