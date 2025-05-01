@@ -42,7 +42,8 @@ function clearHold() {
 
 <template>
   <button
-    class="hold-button"
+    class="hold-button bg-transparent color-white border border-solid border-transparent border-3 rounded-lg cursor-pointer position-relative
+    hover:border-gray-600"
     :class="[{ holding: isHolding }]"
     @mousedown="startHold(onHoldAction)"
     @mouseup="cancelHold(onClickAction)"
@@ -55,21 +56,6 @@ function clearHold() {
 </template>
 
 <style scoped>
-.hold-button {
-  padding: 0.5rem 1rem;
-  background-color: transparent;
-  color: white;
-  border: solid 3px transparent;
-  border-radius: 1rem;
-  cursor: pointer;
-  transition: border-color 0.1s ease;
-  position: relative;
-}
-
-.hold-button:hover {
-  border-color: #000000;
-}
-
 .hold-button.holding {
   animation: holdProgress 2s linear forwards;
 }
