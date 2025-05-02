@@ -203,10 +203,26 @@ function onSettingsUpdate(newSettings: ExecuteMSCSettings) {
           <FeatureList v-if="mcmasterItemCurrent.itemFeatures" :features="flattenRecord(mcmasterItemCurrent.itemFeatures)" @update:features="onFeatureUpdate" />
         </div>
       </div>
-      <button class="" @click="toggleSettings()">
-        {{ showSettings ? `Hide Settings` : `Show Settings` }}
-      </button>
-      <MSCSettings v-show="showSettings" @update:settings="onSettingsUpdate" />
+      <div class="bg-gray-2 p-2 rounded-sm">
+        <input
+          id="hideShowSettings"
+          type="checkbox"
+          class="hidden"
+        >
+        <label
+          for="hideShowSettings"
+          class="flex items-center gap-1 cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-800"
+          @click="toggleSettings()"
+        >
+          <div
+            class="i-material-symbols:arrow-drop-down-rounded text-xl rotate-270"
+            :class="{ 'rotate-360': showSettings }"
+          />
+          <h3 class="p-1 m-0 flex-1"> {{ `${showSettings ? 'Hide' : 'Show'} Search Settings` }} </h3>
+          <div class="i-material-symbols:settings-rounded h-full aspect-square text-xl" />
+        </label>
+        <MSCSettings v-show="showSettings" class="mt-3" @update:settings="onSettingsUpdate" />
+      </div>
       <div>
         <p id="timer-result" />
       </div>
