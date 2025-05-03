@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useToggle } from '@vueuse/core'
 import 'uno.css'
-import { sendMessage } from 'webext-bridge/content-script'
+import { onMessage, sendMessage } from 'webext-bridge/content-script'
 import type { McMasterItem } from '../../Item'
 import createSearchQueries from './createSearchQueries'
 import extractTable from '~/utils/extractTable'
@@ -20,10 +20,15 @@ const settings = ref<ExecuteMSCSettings>()
 const searchErrors = ref<Error[]>([])
 
 onMounted(() => {
-  const mcmasterItem = scanPage()
-  if (mcmasterItem.primaryName)
-    mcmasterItemCurrent.value = mcmasterItem
-  settings.value = defaultSettings
+  onMessage('tab-finished-loading', ({ data }) => {
+    console.log('Tab has finished loading:', data)
+    // Perform actions now that the tab has fully loaded
+    const mcmasterItem = scanPage()
+    console.log('mcmasterItem: ', mcmasterItem)
+    if (mcmasterItem.primaryName)
+      mcmasterItemCurrent.value = mcmasterItem
+    settings.value = defaultSettings
+  })
 })
 
 function scanPage() {
@@ -44,12 +49,12 @@ function scanPage() {
   if (tables.length === 1) {
     pageObj.itemFeatures = extractTable(tables[0])
   }
-  else {
+  else if (tables.length > 1) {
     const productDetailTable = tables.find(table =>
       table.className.includes('ProductDetail'),
     )
     if (!productDetailTable) {
-      console.warn('ProductDetail table not found- using last table on page')
+      console.log('ProductDetail table not found- using last table on page')
       pageObj.itemFeatures = extractTable(tables[tables.length - 1])
     }
     else {

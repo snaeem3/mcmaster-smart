@@ -51,16 +51,31 @@ browser.tabs.onActivated.addListener(async ({ tabId }) => {
   sendMessage('tab-prev', { title: tab.title }, { context: 'content-script', tabId })
 })
 
+browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete') {
+    try {
+      await sendMessage('tab-finished-loading', { url: tab.url ?? null }, `content-script@${tabId}`)
+      console.log(`Message sent to content script in tab ${tabId}`)
+    }
+    catch (error) {
+      console.error(`Failed to send message to tab ${tabId}:`, error)
+    }
+  }
+})
+
 onMessage('get-current-tab', async () => {
   try {
     const tab = await browser.tabs.get(previousTabId)
+    console.log('tab: ', tab)
     return {
       title: tab?.title,
+      // status: tab?.status as Tabs.TabStatus,
     }
   }
   catch {
     return {
       title: undefined,
+      // status: undefined,
     }
   }
 })

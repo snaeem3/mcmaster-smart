@@ -23,9 +23,6 @@ import { setupApp } from '~/logic/common-setup'
   shadowDOM.appendChild(styleEl)
   shadowDOM.appendChild(root)
   document.body.appendChild(container)
-  // const app = createApp(App)
-  // setupApp(app)
-  // window.onload = () => app.mount(root)
   window.onload = () => {
     const app = createApp(App)
     setupApp(app)
