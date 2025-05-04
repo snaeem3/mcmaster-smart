@@ -69,25 +69,29 @@ watch(
 </script>
 
 <template>
-  <div class="flex justify-center gap-3">
-    <button
-      class="px-4 py-2 rounded-lg font-semibold text-blue-600 border border-solid border-gray-100  bg-gray-50 hover:bg-light transition-colors duration-200
+  <div class="flex justify-between gap-4">
+    <h2>{{ `Enabled Features (${enabledFeatures.length})` }}</h2>
+    <div class="flex justify-center gap-3">
+      <button
+        class="px-4 py-2 rounded-lg font-semibold text-blue-600 border border-solid border-gray-100  bg-gray-50 hover:bg-light transition-colors duration-200
          disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-60 disabled:text-gray-600"
-      :disabled="disabledFeatures.length <= 0"
-      @click="enableAll()"
-    >
-      Enable All
-    </button>
-    <button
-      class="px-4 py-2 rounded-lg font-semibold text-white border border-solid border-gray-100 bg-blue-600 hover:bg-blue-700 transition-colors duration-200
+        :disabled="disabledFeatures.length <= 0"
+        @click="enableAll()"
+      >
+        Enable All
+      </button>
+      <button
+        class="px-4 py-2 rounded-lg font-semibold text-white border border-solid border-gray-100 bg-blue-600 hover:bg-blue-700 transition-colors duration-200
          disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-60"
-      :disabled="enabledFeatures.length <= 0"
-      @click="disableAll()"
-    >
-      Disable All
-    </button>
+        :disabled="enabledFeatures.length <= 0"
+        @click="disableAll()"
+      >
+        Disable All
+      </button>
+    </div>
   </div>
-  <ol>
+
+  <ol class="list-decimal">
     <li v-for="([feature, value], index) of enabledFeatures" :key="feature" class="flex justify-between hover:bg-yellow-200 px-1">
       <p><strong>{{ `${feature} : ` }}</strong> {{ value }}</p>
       <div class="flex gap-2 items-center">
@@ -114,9 +118,18 @@ watch(
       </div>
     </li>
   </ol>
+  <h2>{{ `Disabled Features (${disabledFeatures.length})` }}</h2>
   <ul>
-    <li v-for="([feature, value], index) in disabledFeatures" :key="feature" class="flex cursor-pointer hover:bg-yellow-500 p-1" @click="enable(index)">
+    <li
+      v-for="([feature, value], index) in disabledFeatures"
+      :key="feature"
+      class="flex cursor-pointer hover:bg-yellow-500 p-1 items-center group"
+      @click="enable(index)"
+    >
       <strong>{{ `${feature} : ` }}</strong> {{ value }}
+      <span class="ml-3 text-sm text-blue-700 invisible group-hover:visible ml-auto">
+        re-enable?
+      </span>
     </li>
   </ul>
 </template>

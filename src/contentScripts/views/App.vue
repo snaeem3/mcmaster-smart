@@ -201,7 +201,7 @@ function onSettingsUpdate(newSettings: ExecuteMSCSettings) {
         </ul>
       </div>
       <div>
-        <h4 id="item-title">
+        <h4 id="item-title" class="text-lg">
           {{ mcmasterItemCurrent.primaryName }}
         </h4>
         <div id="item-info">
