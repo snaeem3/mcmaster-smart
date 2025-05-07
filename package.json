@@ -1,6 +1,6 @@
 {
   "name": "mcmaster-smart",
-  "displayName": "McMaster Smart WebExt",
+  "displayName": "McMaster Smart",
   "version": "0.0.1",
   "private": true,
   "packageManager": "pnpm@9.7.1",

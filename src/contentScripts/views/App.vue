@@ -254,7 +254,7 @@ function onSettingsUpdate(newSettings: ExecuteMSCSettings) {
       bg="teal-600 hover:teal-700"
       @click="toggle()"
     >
-      <pixelarticons-power class="block m-auto text-white text-lg" />
+      <pixelarticons-menu class="block m-auto text-white text-lg" />
     </button>
   </div>
 </template>
