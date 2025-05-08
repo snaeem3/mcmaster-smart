@@ -93,7 +93,9 @@ watch(
 
   <ol class="list-decimal">
     <li v-for="([feature, value], index) of enabledFeatures" :key="feature" class="flex justify-between hover:bg-yellow-200 px-1">
-      <p><strong>{{ `${feature} : ` }}</strong> {{ value }}</p>
+      <p class="truncate hover:text-wrap">
+        <strong>{{ `${feature} : ` }}</strong> {{ value }}
+      </p>
       <div class="flex gap-2 items-center">
         <HoldClickButton
           v-if="index !== 0"
@@ -123,7 +125,7 @@ watch(
     <li
       v-for="([feature, value], index) in disabledFeatures"
       :key="feature"
-      class="flex cursor-pointer hover:bg-yellow-500 p-1 items-center group"
+      class="flex cursor-pointer hover:bg-yellow-500 p-1 items-center group truncate hover:text-wrap"
       @click="enable(index)"
     >
       <strong>{{ `${feature} : ` }}</strong> {{ value }}

@@ -162,7 +162,7 @@ function onSettingsUpdate(newSettings: ExecuteMSCSettings) {
   <div class="fixed right-0 bottom-0 flex items-end font-sans select-none leading-1em z-[10000]">
     <div
       v-show="show"
-      class="bg-white text-gray-800 rounded-lg shadow w-max h-min max-h-[90vh] overflow-y-auto"
+      class="bg-white text-gray-800 rounded-lg shadow w-max h-min max-h-[90vh] overflow-y-auto  lg:w-lg md:w-md"
       p="x-4 y-2"
       m="y-auto r-2"
       transition="opacity duration-300"
