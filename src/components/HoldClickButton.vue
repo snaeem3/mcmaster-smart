@@ -49,7 +49,7 @@ function clearHold() {
     @mouseup="cancelHold(onClickAction)"
     @mouseleave="clearHold"
   >
-    <div class="text-3xl" :class="[icon]" :bg="iconColor">
+    <div class="text-3xl" :class="[icon, iconColor]" :bg="iconColor">
       {{ text }}
     </div>
   </button>

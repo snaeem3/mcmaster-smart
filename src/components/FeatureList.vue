@@ -102,13 +102,13 @@ watch(
           :on-click-action="() => moveUp(index)"
           :on-hold-action="() => moveToTop(index)"
           icon="i-material-symbols:arrow-upward"
-          icon-color="green-500"
+          icon-color="bg-green-500"
         />
         <HoldClickButton
           :on-click-action="() => moveDown(index)"
           :on-hold-action="() => moveToBottom(index)"
           icon="i-material-symbols:arrow-downward"
-          icon-color="blue-500"
+          icon-color="bg-blue-500"
         />
 
         <button
