@@ -23,12 +23,20 @@ function resetToDefault() {
       <div>
         <label class="flex justify-between cursor-pointer text-base" :for="key">{{ key }}
 
-          <input
-            v-if="typeof settings[key] === 'boolean'"
-            :id="key"
-            v-model="settings[key]"
-            type="checkbox"
-          >
+          <span v-if="typeof settings[key] === 'boolean'" class="relative inline-flex items-center w-10 h-6">
+            <input
+              :id="key"
+              v-model="settings[key]"
+              type="checkbox"
+              class="sr-only peer"
+            >
+            <div
+              class="w-10 h-6 bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-colors duration-200"
+            />
+            <div
+              class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"
+            />
+          </span>
 
           <!-- Number: Slider -->
           <template v-else-if="typeof settings[key] === 'number'">
