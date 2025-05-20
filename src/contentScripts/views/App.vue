@@ -5,6 +5,7 @@ import { onMessage, sendMessage } from 'webext-bridge/content-script'
 import type { McMasterItem } from '../../Item'
 import createSearchQueries from './createSearchQueries'
 import extractTable from '~/utils/extractTable'
+import getBetweenLastTwoSlashes from '~/utils/getBetweenLastTwoSlashes'
 import getBestMatchingProduct from '~/bestMatchingProduct'
 import type { MSCItem } from '~/msc/MSCItem'
 import FeatureList from '~/components/FeatureList.vue'
@@ -35,6 +36,7 @@ function scanPage() {
   const title = document.querySelector('h1')?.textContent
   const h3 = document.querySelector('h3')?.textContent
   const tables = [...document.querySelectorAll('table')]
+  const currentUrl = window.location.href
   // TODO: extract price
 
   const pageObj: Partial<McMasterItem> = {
@@ -61,6 +63,7 @@ function scanPage() {
       pageObj.itemFeatures = extractTable(productDetailTable)
     }
   }
+  pageObj.mcMasterId = getBetweenLastTwoSlashes(currentUrl)
 
   return pageObj
 }
