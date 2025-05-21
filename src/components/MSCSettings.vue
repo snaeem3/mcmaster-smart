@@ -38,7 +38,7 @@ function resetToDefault() {
             />
           </span>
 
-          <!-- Number: Slider -->
+          <!-- Number: Slider and Input -->
           <template v-else-if="typeof settings[key] === 'number'">
             <input
               :id="key"
@@ -48,7 +48,14 @@ function resetToDefault() {
               max="1"
               step="0.01"
             >
-            <span>{{ settings[key] }}</span>
+            <input
+              v-model.number="settings[key]"
+              type="number"
+              min="0"
+              max="1"
+              step="0.01"
+              class="w-16 px-1 border rounded"
+            >
           </template>
         </label>
       </div>
