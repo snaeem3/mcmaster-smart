@@ -19,6 +19,7 @@ const mcmasterItemCurrent = ref<Partial<McMasterItem>>({})
 const foundProducts = ref<Partial<MSCItem>[]>([])
 const settings = ref<ExecuteMSCSettings>()
 const searchErrors = ref<Error[]>([])
+const searchTime = ref<number>(0)
 
 onMounted(() => {
   onMessage('tab-finished-loading', ({ data }) => {
@@ -69,7 +70,7 @@ function scanPage() {
 }
 
 async function handleSearchMSC(DEBUG = false) {
-  // const startTime = performance.now()
+  const startTime = performance.now()
   foundProducts.value = []
   searchErrors.value = []
 
@@ -108,9 +109,11 @@ async function handleSearchMSC(DEBUG = false) {
   if (error)
     searchErrors.value.push(error)
 
-  // const currentTime = performance.now()
-  // const elapsedTime = currentTime - startTime
-  // const seconds = elapsedTime / 1000
+  // Calculate and update search time
+  const currentTime = performance.now()
+  const elapsedTime = currentTime - startTime
+  const seconds = elapsedTime / 1000
+  searchTime.value = seconds
 
   if (windowResults) {
     for (let i = 0; i < windowResults.length; i++) {
@@ -187,7 +190,8 @@ function onSettingsUpdate(newSettings: ExecuteMSCSettings) {
       </button>
       <div v-if="foundProducts.length > 0" class="my-4">
         <h2 class="text-base font-semibold mb-2 text-indigo-700 flex items-center gap-2">
-          <span class="i-material-symbols:check-circle-rounded text-green-500 text-xl" /> Found Products
+          <span class="i-material-symbols:check-circle-rounded text-green-500 text-xl" />
+          Found {{ foundProducts.length }} Products in {{ Math.round(searchTime * 100) / 100 }} seconds
         </h2>
         <ol id="match-list" class="space-y-2">
           <li
