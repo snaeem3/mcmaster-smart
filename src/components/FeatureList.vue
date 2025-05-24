@@ -5,20 +5,36 @@ const props = defineProps<{
   features: Record<string, string>
 }>()
 const emit = defineEmits<{
-  (e: 'update:features', value: Record<string, string>): void
+  (e: 'update:features', enabledFeatures: Record<string, string>, disabledFeatures: Record<string, string>): void
 }>()
 
-const enabledFeatures = reactive<[string, string][]>(Object.entries(props.features))
-const disabledFeatures = reactive<[string, string][]>([])
+const enabledFeatures = ref<[string, string][]>([])
+const disabledFeatures = ref<[string, string][]>([])
+
+// Sync prop to local state
+watch(
+  () => props.features,
+  (newFeatures) => {
+    const newEntries = Object.entries(newFeatures)
+    enabledFeatures.value = [...newEntries]
+    // disabledFeatures.value = []
+  },
+  { immediate: true, deep: true },
+)
+
+// Remove the second watcher that was causing the infinite loop
+// Only emit when user performs actions, not when props change
 
 function enable(index: number) {
-  const [feature] = disabledFeatures.splice(index, 1)
-  enabledFeatures.push(feature)
+  const [key, value] = disabledFeatures.value.splice(index, 1)[0]
+  enabledFeatures.value.push([key, value])
+  emitUpdate()
 }
 
 function disable(index: number) {
-  const [feature] = enabledFeatures.splice(index, 1)
-  disabledFeatures.push(feature)
+  const [key, value] = enabledFeatures.value.splice(index, 1)[0]
+  disabledFeatures.value.push([key, value])
+  emitUpdate()
 }
 
 function moveAllElements(fromArray: any[], toArray: any[]) {
@@ -28,44 +44,56 @@ function moveAllElements(fromArray: any[], toArray: any[]) {
 }
 
 function enableAll() {
-  moveAllElements(disabledFeatures, enabledFeatures)
+  moveAllElements(disabledFeatures.value, enabledFeatures.value)
+  emitUpdate()
 }
 
 function disableAll() {
-  moveAllElements(enabledFeatures, disabledFeatures)
+  moveAllElements(enabledFeatures.value, disabledFeatures.value)
+  emitUpdate()
 }
 
 function moveUp(index: number) {
   if (index === 0)
     return
-  [enabledFeatures[index - 1], enabledFeatures[index]] = [enabledFeatures[index], enabledFeatures[index - 1]]
+  [enabledFeatures.value[index - 1], enabledFeatures.value[index]] = [enabledFeatures.value[index], enabledFeatures.value[index - 1]]
+  emitUpdate()
 }
 
 function moveDown(index: number) {
-  if (index === enabledFeatures.length - 1)
+  if (index === enabledFeatures.value.length - 1)
     return;
-  [enabledFeatures[index + 1], enabledFeatures[index]] = [enabledFeatures[index], enabledFeatures[index + 1]]
+  [enabledFeatures.value[index + 1], enabledFeatures.value[index]] = [enabledFeatures.value[index], enabledFeatures.value[index + 1]]
+  emitUpdate()
 }
 
 function moveToTop(index: number) {
-  const [feature] = enabledFeatures.splice(index, 1)
-  enabledFeatures.unshift(feature)
+  const [feature] = enabledFeatures.value.splice(index, 1)
+  enabledFeatures.value.unshift(feature)
+  emitUpdate()
 }
 
 function moveToBottom(index: number) {
-  const [feature] = enabledFeatures.splice(index, 1)
-  enabledFeatures.push(feature)
+  const [feature] = enabledFeatures.value.splice(index, 1)
+  enabledFeatures.value.push(feature)
+  emitUpdate()
 }
 
-// Emit enabled features (in order) whenever the list changes
-watch(
-  enabledFeatures,
-  () => {
-    const updatedFeatures = Object.fromEntries(enabledFeatures)
-    emit('update:features', updatedFeatures)
+// Emit both enabled and disabled features
+function emitUpdate() {
+  const enabledFeaturesObj = Object.fromEntries(enabledFeatures.value)
+  const disabledFeaturesObj = Object.fromEntries(disabledFeatures.value)
+  emit('update:features', enabledFeaturesObj, disabledFeaturesObj)
+}
+
+// Expose a method for parent to reset everything
+defineExpose({
+  resetFeatures: (newFeatures: Record<string, string>) => {
+    const newEntries = Object.entries(newFeatures)
+    enabledFeatures.value = [...newEntries]
+    disabledFeatures.value = []
   },
-  { deep: true, immediate: true },
-)
+})
 </script>
 
 <template>

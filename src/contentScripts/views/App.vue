@@ -4,8 +4,7 @@ import 'uno.css'
 import { onMessage, sendMessage } from 'webext-bridge/content-script'
 import type { McMasterItem } from '../../Item'
 import createSearchQueries from './createSearchQueries'
-import extractTable from '~/utils/extractTable'
-import getBetweenLastTwoSlashes from '~/utils/getBetweenLastTwoSlashes'
+import extractMcMasterProductPage from '~/mcmaster/extractProductPage'
 import getBestMatchingProduct from '~/bestMatchingProduct'
 import type { MSCItem } from '~/msc/MSCItem'
 import FeatureList from '~/components/FeatureList.vue'
@@ -16,6 +15,13 @@ import { defaultSettings } from '~/msc/settings'
 const [show, toggle] = useToggle(true)
 const [showSettings, toggleSettings] = useToggle(false)
 const mcmasterItemCurrent = ref<Partial<McMasterItem>>({})
+const flattenedFeatures = computed(() =>
+  mcmasterItemCurrent.value.itemFeatures
+    ? flattenRecord(mcmasterItemCurrent.value.itemFeatures)
+    : {},
+)
+const disabledFeatures = ref<Record<string, string>>({})
+const featureListRef = ref()
 const foundProducts = ref<Partial<MSCItem>[]>([])
 const settings = ref<ExecuteMSCSettings>()
 const searchErrors = ref<Error[]>([])
@@ -26,48 +32,21 @@ onMounted(() => {
   onMessage('tab-finished-loading', ({ data }) => {
     console.log('Tab has finished loading:', data)
     // Perform actions now that the tab has fully loaded
-    const mcmasterItem = scanPage()
-    console.log('mcmasterItem: ', mcmasterItem)
-    if (mcmasterItem.primaryName)
-      mcmasterItemCurrent.value = mcmasterItem
+    setMcMasterItemCurrent()
     settings.value = defaultSettings
   })
 })
 
-function scanPage() {
-  const title = document.querySelector('h1')?.textContent
-  const h3 = document.querySelector('h3')?.textContent
-  const tables = [...document.querySelectorAll('table')]
-  const currentUrl = window.location.href
-  // TODO: extract price
-
-  const pageObj: Partial<McMasterItem> = {
-    primaryName: '',
-    secondaryName: '',
-  }
-  if (title)
-    pageObj.primaryName = title
-  if (h3)
-    pageObj.secondaryName = h3
-
-  if (tables.length === 1) {
-    pageObj.itemFeatures = extractTable(tables[0])
-  }
-  else if (tables.length > 1) {
-    const productDetailTable = tables.find(table =>
-      table.className.includes('ProductDetail'),
-    )
-    if (!productDetailTable) {
-      console.log('ProductDetail table not found- using last table on page')
-      pageObj.itemFeatures = extractTable(tables[tables.length - 1])
-    }
-    else {
-      pageObj.itemFeatures = extractTable(productDetailTable)
+function setMcMasterItemCurrent() {
+  const mcmasterItem = extractMcMasterProductPage()
+  if (mcmasterItem.primaryName) {
+    mcmasterItemCurrent.value = mcmasterItem
+    // Reset the child component when new data is loaded
+    if (featureListRef.value && mcmasterItem.itemFeatures) {
+      featureListRef.value.resetFeatures(mcmasterItem.itemFeatures)
+      disabledFeatures.value = {}
     }
   }
-  pageObj.mcMasterId = getBetweenLastTwoSlashes(currentUrl)
-
-  return pageObj
 }
 
 async function handleSearchMSC(DEBUG = false) {
@@ -154,9 +133,13 @@ async function handleSearchMSC(DEBUG = false) {
   isSearching.value = false
 }
 
-function onFeatureUpdate(features: Record<string, string>) {
-  mcmasterItemCurrent.value.itemFeatures = features
-  console.log('onFeatureUpdate: ', mcmasterItemCurrent.value)
+function onFeatureUpdate(enabledFeatures: Record<string, string>, disabledFeaturesObj: Record<string, string>) {
+  mcmasterItemCurrent.value = {
+    ...mcmasterItemCurrent.value,
+    itemFeatures: enabledFeatures,
+  }
+  // Store disabled features
+  disabledFeatures.value = disabledFeaturesObj
 }
 
 function onSettingsUpdate(newSettings: ExecuteMSCSettings) {
@@ -231,8 +214,14 @@ function onSettingsUpdate(newSettings: ExecuteMSCSettings) {
         <h4 id="item-title" class="text-lg">
           {{ mcmasterItemCurrent.primaryName }}
         </h4>
+
         <div id="item-info">
-          <FeatureList v-if="mcmasterItemCurrent.itemFeatures" :features="flattenRecord(mcmasterItemCurrent.itemFeatures)" @update:features="onFeatureUpdate" />
+          <FeatureList
+            v-if="mcmasterItemCurrent.itemFeatures"
+            ref="featureListRef"
+            :features="flattenedFeatures"
+            @update:features="onFeatureUpdate"
+          />
         </div>
       </div>
       <div class="bg-gray-2 p-2 rounded-sm">
