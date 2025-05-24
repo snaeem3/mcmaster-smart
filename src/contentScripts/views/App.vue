@@ -20,6 +20,7 @@ const foundProducts = ref<Partial<MSCItem>[]>([])
 const settings = ref<ExecuteMSCSettings>()
 const searchErrors = ref<Error[]>([])
 const searchTime = ref<number>(0)
+const isSearching = ref(false)
 
 onMounted(() => {
   onMessage('tab-finished-loading', ({ data }) => {
@@ -70,6 +71,7 @@ function scanPage() {
 }
 
 async function handleSearchMSC(DEBUG = false) {
+  isSearching.value = true
   const startTime = performance.now()
   foundProducts.value = []
   searchErrors.value = []
@@ -149,9 +151,7 @@ async function handleSearchMSC(DEBUG = false) {
 
   showSettings.value = false
 
-  // if (timerResult) {
-  //   timerResult.textContent = `Found in ${Math.round(seconds * 100) / 100}s`;
-  // }
+  isSearching.value = false
 }
 
 function onFeatureUpdate(features: Record<string, string>) {
@@ -182,11 +182,14 @@ function onSettingsUpdate(newSettings: ExecuteMSCSettings) {
       <button
         id="search-btn"
         class="w-full px-6 py-3 text-lg font-bold rounded-xl border border-solid border-gray-100 shadow-lg bg-gradient-to-r from-indigo-600 to-purple-600
-         hover:from-indigo-700 hover:to-purple-700 text-white transition-all duration-200
-         focus:outline-none focus:ring-4 focus:ring-indigo-300"
+        flex items-center justify-center
+        hover:from-indigo-700 hover:to-purple-700 text-white transition-all duration-200
+        focus:outline-none focus:ring-4 focus:ring-indigo-300"
+        :disabled="isSearching"
         @click="handleSearchMSC()"
       >
-        Search MSC
+        <div v-if="isSearching" class="i-svg-spinners:90-ring-with-bg text-white text-xl" />
+        <span v-else>Search MSC</span>
       </button>
       <div v-if="foundProducts.length > 0" class="my-4">
         <h2 class="text-base font-semibold mb-2 text-indigo-700 flex items-center gap-2">
