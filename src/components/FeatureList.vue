@@ -156,7 +156,7 @@ defineExpose({
       class="flex cursor-pointer hover:bg-yellow-500 p-1 items-center group truncate hover:text-wrap"
       @click="enable(index)"
     >
-      <strong>{{ `${feature} : ` }}</strong> {{ value }}
+      <strong>{{ feature }}:&nbsp;</strong><p>{{ value }}</p>
       <span class="ml-3 text-sm text-blue-700 invisible group-hover:visible ml-auto">
         re-enable?
       </span>
