@@ -4,6 +4,7 @@ import 'uno.css'
 import { onMessage, sendMessage } from 'webext-bridge/content-script'
 import type { McMasterItem } from '../../Item'
 import createSearchQueries from './createSearchQueries'
+import isMcMasterProductPage from '~/mcmaster/isProductPage'
 import extractMcMasterProductPage from '~/mcmaster/extractProductPage'
 import getBestMatchingProduct from '~/bestMatchingProduct'
 import type { MSCItem } from '~/msc/MSCItem'
@@ -32,7 +33,15 @@ onMounted(() => {
   onMessage('tab-finished-loading', ({ data }) => {
     console.log('Tab has finished loading:', data)
     // Perform actions now that the tab has fully loaded
-    setMcMasterItemCurrent()
+    if (isMcMasterProductPage()) {
+      setMcMasterItemCurrent()
+      foundProducts.value = []
+      searchErrors.value = []
+      show.value = true
+    }
+    else {
+      show.value = false
+    }
     settings.value = defaultSettings
   })
 })
